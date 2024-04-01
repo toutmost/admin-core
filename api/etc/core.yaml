@@ -1,0 +1,22 @@
+Name: Core.api
+Host: 0.0.0.0
+Port: 0
+Timeout: 2000
+
+Auth:
+  AccessSecret: # the same as core
+  AccessExpire: 259200
+
+CROSConf:
+  Address: '*'
+
+Log:
+  ServiceName: CoreApiLogger
+  Mode: file
+  Path: /home/data/logs/Core/api
+  Level: info
+  Compress: false
+  KeepDays: 7
+  StackCoolDownMillis: 100
+
+
