@@ -2,6 +2,8 @@ package oauthprovider
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,16 @@ func NewOauthLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OauthL
 }
 
 func (l *OauthLoginLogic) OauthLogin(req *types.OauthLoginReq) (resp *types.RedirectResp, err error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.CoreRpc.OauthLogin(l.ctx, &core.OauthLoginReq{
+		State:    req.State,
+		Provider: req.Provider,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.RedirectResp{
+		BaseDataInfo: types.BaseDataInfo{Msg: l.svcCtx.Trans.Trans(l.ctx, i18n.Success)},
+		Data:         types.RedirectInfo{URL: result.Url},
+	}, nil
 }

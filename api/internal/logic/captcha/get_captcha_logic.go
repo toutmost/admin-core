@@ -2,6 +2,9 @@ package captcha
 
 import (
 	"context"
+	"fmt"
+	"github.com/toutmost/admin-common/enum/errorcode"
+	"github.com/toutmost/admin-common/i18n"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +26,22 @@ func NewGetCaptchaLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetCap
 }
 
 func (l *GetCaptchaLogic) GetCaptcha() (resp *types.CaptchaResp, err error) {
-	// todo: add your logic here and delete this line
+	if id, b64s, _, err := l.svcCtx.Captcha.Generate(); err != nil {
+		logx.Errorw("fail to generate captcha", logx.Field("detail", err.Error()))
+		return &types.CaptchaResp{
+			BaseDataInfo: types.BaseDataInfo{Code: errorcode.Internal, Msg: l.svcCtx.Trans.Trans(l.ctx, i18n.Failed)},
+			Data:         types.CaptchaInfo{},
+		}, nil
+	} else {
+		fmt.Println("=================================>", id, b64s)
+		resp = &types.CaptchaResp{
+			BaseDataInfo: types.BaseDataInfo{Msg: l.svcCtx.Trans.Trans(l.ctx, i18n.Success)},
+			Data: types.CaptchaInfo{
+				CaptchaId: id,
+				ImgPath:   b64s,
+			},
+		}
+		return resp, nil
+	}
 
-	return
 }

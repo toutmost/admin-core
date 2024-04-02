@@ -1,0 +1,13 @@
+Name: core.rpc
+ListenOn: 0.0.0.0:0
+
+
+Log:
+  ServiceName: coreRpcLogger
+  Mode: file
+  Path: /home/data/logs/core/rpc
+  Encoding: json
+  Level: info
+  Compress: false
+  KeepDays: 7
+  StackCoolDownMillis: 100
