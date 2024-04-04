@@ -2,6 +2,10 @@ package dictionary
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/ent/dictionary"
+	"github.com/toutmost/admin-core/rpc/ent/predicate"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +28,29 @@ func NewGetDictionaryListLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *GetDictionaryListLogic) GetDictionaryList(in *core.DictionaryListReq) (*core.DictionaryListResp, error) {
-	// todo: add your logic here and delete this line
+	var predicates []predicate.Dictionary
+	if in.Name != nil {
+		predicates = append(predicates, dictionary.NameContains(*in.Name))
+	}
+	result, err := l.svcCtx.DB.Dictionary.Query().Where(predicates...).Page(l.ctx, in.Page, in.PageSize)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.DictionaryListResp{}, nil
+	resp := &core.DictionaryListResp{}
+	resp.Total = result.PageDetails.Total
+
+	for _, v := range result.List {
+		resp.Data = append(resp.Data, &core.DictionaryInfo{
+			Id:        &v.ID,
+			CreatedAt: pointy.GetPointer(v.CreatedAt.UnixMilli()),
+			UpdatedAt: pointy.GetPointer(v.UpdatedAt.UnixMilli()),
+			Status:    pointy.GetPointer(uint32(v.Status)),
+			Title:     &v.Title,
+			Name:      &v.Name,
+			Desc:      &v.Desc,
+		})
+	}
+
+	return resp, nil
 }

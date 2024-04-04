@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,21 @@ func NewGetUserProfileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 }
 
 func (l *GetUserProfileLogic) GetUserProfile() (resp *types.ProfileResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetUserById(l.ctx, &core.UUIDReq{Id: l.ctx.Value("userId").(string)})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.ProfileResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.ProfileInfo{
+			Nickname: data.Nickname,
+			Avatar:   data.Avatar,
+			Mobile:   data.Mobile,
+			Email:    data.Email,
+		},
+	}, nil
 }

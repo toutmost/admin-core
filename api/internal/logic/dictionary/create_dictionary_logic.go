@@ -2,6 +2,7 @@ package dictionary
 
 import (
 	"context"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +24,15 @@ func NewCreateDictionaryLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *CreateDictionaryLogic) CreateDictionary(req *types.DictionaryInfo) (resp *types.BaseMsgResp, err error) {
-	// todo: add your logic here and delete this line
-
-	return
+	data, err := l.svcCtx.CoreRpc.CreateDictionary(l.ctx,
+		&core.DictionaryInfo{
+			Title:  req.Title,
+			Name:   req.Name,
+			Status: req.Status,
+			Desc:   req.Desc,
+		})
+	if err != nil {
+		return nil, err
+	}
+	return &types.BaseMsgResp{Msg: l.svcCtx.Trans.Trans(l.ctx, data.Msg)}, nil
 }

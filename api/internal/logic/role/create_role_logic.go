@@ -2,6 +2,7 @@ package role
 
 import (
 	"context"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +24,23 @@ func NewCreateRoleLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Create
 }
 
 func (l *CreateRoleLogic) CreateRole(req *types.RoleInfo) (resp *types.BaseMsgResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.CreateRole(l.ctx,
+		&core.RoleInfo{
+			Status:        req.Status,
+			Name:          req.Name,
+			Code:          req.Code,
+			DefaultRouter: req.DefaultRouter,
+			Remark:        req.Remark,
+			Sort:          req.Sort,
+		})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	err = l.svcCtx.LoadBanRoleData()
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.BaseMsgResp{Msg: l.svcCtx.Trans.Trans(l.ctx, data.Msg)}, nil
 }

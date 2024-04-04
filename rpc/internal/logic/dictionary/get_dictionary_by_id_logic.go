@@ -2,6 +2,8 @@ package dictionary
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +26,18 @@ func NewGetDictionaryByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *GetDictionaryByIdLogic) GetDictionaryById(in *core.IDReq) (*core.DictionaryInfo, error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.DB.Dictionary.Get(l.ctx, in.Id)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.DictionaryInfo{}, nil
+	return &core.DictionaryInfo{
+		Id:        &result.ID,
+		CreatedAt: pointy.GetPointer(result.CreatedAt.UnixMilli()),
+		UpdatedAt: pointy.GetPointer(result.UpdatedAt.UnixMilli()),
+		Status:    pointy.GetPointer(uint32(result.Status)),
+		Title:     &result.Title,
+		Name:      &result.Name,
+		Desc:      &result.Desc,
+	}, nil
 }

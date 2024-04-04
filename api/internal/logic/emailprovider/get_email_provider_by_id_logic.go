@@ -2,6 +2,9 @@ package emailprovider
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-message-center/types/mcms"
+	"github.com/zeromicro/go-zero/core/errorx"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +26,35 @@ func NewGetEmailProviderByIdLogic(ctx context.Context, svcCtx *svc.ServiceContex
 }
 
 func (l *GetEmailProviderByIdLogic) GetEmailProviderById(req *types.IDReq) (resp *types.EmailProviderInfoResp, err error) {
-	// todo: add your logic here and delete this line
+	if !l.svcCtx.Config.McmsRpc.Enabled {
+		return nil, errorx.NewCodeUnavailableError(i18n.ServiceUnavailable)
+	}
+	data, err := l.svcCtx.McmsRpc.GetEmailProviderById(l.ctx, &mcms.IDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.EmailProviderInfoResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.EmailProviderInfo{
+			BaseIDInfo: types.BaseIDInfo{
+				Id:        data.Id,
+				CreatedAt: data.CreatedAt,
+				UpdatedAt: data.UpdatedAt,
+			},
+			Name:      data.Name,
+			AuthType:  data.AuthType,
+			EmailAddr: data.EmailAddr,
+			Password:  data.Password,
+			HostName:  data.HostName,
+			Identify:  data.Identify,
+			Secret:    data.Secret,
+			Port:      data.Port,
+			Tls:       data.Tls,
+			IsDefault: data.IsDefault,
+		},
+	}, nil
 }

@@ -2,6 +2,9 @@ package position
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -25,7 +28,16 @@ func NewCreatePositionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cr
 
 // Position management
 func (l *CreatePositionLogic) CreatePosition(in *core.PositionInfo) (*core.BaseIDResp, error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.DB.Position.Create().
+		SetNotNilStatus(pointy.GetStatusPointer(in.Status)).
+		SetNotNilSort(in.Sort).
+		SetNotNilName(in.Name).
+		SetNotNilCode(in.Code).
+		SetNotNilRemark(in.Remark).
+		Save(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.BaseIDResp{}, nil
+	return &core.BaseIDResp{Id: result.ID, Msg: i18n.CreateSuccess}, nil
 }

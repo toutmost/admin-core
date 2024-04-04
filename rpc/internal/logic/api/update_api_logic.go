@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +26,17 @@ func NewUpdateApiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UpdateA
 }
 
 func (l *UpdateApiLogic) UpdateApi(in *core.ApiInfo) (*core.BaseResp, error) {
-	// todo: add your logic here and delete this line
+	err := l.svcCtx.DB.API.UpdateOneID(*in.Id).
+		SetNotNilPath(in.Path).
+		SetNotNilDescription(in.Description).
+		SetNotNilAPIGroup(in.ApiGroup).
+		SetNotNilMethod(in.Method).
+		SetNotNilIsRequired(in.IsRequired).
+		SetNotNilServiceName(in.ServiceName).
+		Exec(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.BaseResp{}, nil
+	return &core.BaseResp{Msg: i18n.UpdateSuccess}, nil
 }

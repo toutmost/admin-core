@@ -2,6 +2,8 @@ package department
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,39 @@ func NewGetDepartmentListLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *GetDepartmentListLogic) GetDepartmentList(req *types.DepartmentListReq) (resp *types.DepartmentListResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetDepartmentList(l.ctx,
+		&core.DepartmentListReq{
+			Page:     req.Page,
+			PageSize: req.PageSize,
+			Name:     req.Name,
+			Leader:   req.Leader,
+		})
+	if err != nil {
+		return nil, err
+	}
+	resp = &types.DepartmentListResp{}
+	resp.Msg = l.svcCtx.Trans.Trans(l.ctx, i18n.Success)
+	resp.Data.Total = data.GetTotal()
 
-	return
+	for _, v := range data.Data {
+		resp.Data.Data = append(resp.Data.Data,
+			types.DepartmentInfo{
+				BaseIDInfo: types.BaseIDInfo{
+					Id:        v.Id,
+					CreatedAt: v.CreatedAt,
+					UpdatedAt: v.UpdatedAt,
+				},
+				Trans:     l.svcCtx.Trans.Trans(l.ctx, *v.Name),
+				Status:    v.Status,
+				Sort:      v.Sort,
+				Name:      v.Name,
+				Ancestors: v.Ancestors,
+				Leader:    v.Leader,
+				Phone:     v.Phone,
+				Email:     v.Email,
+				Remark:    v.Remark,
+				ParentId:  v.ParentId,
+			})
+	}
+	return resp, nil
 }

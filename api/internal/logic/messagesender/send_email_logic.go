@@ -2,6 +2,9 @@ package messagesender
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-message-center/types/mcms"
+	"github.com/zeromicro/go-zero/core/errorx"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +26,18 @@ func NewSendEmailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendEma
 }
 
 func (l *SendEmailLogic) SendEmail(req *types.SendEmailReq) (resp *types.BaseMsgResp, err error) {
-	// todo: add your logic here and delete this line
+	if !l.svcCtx.Config.McmsRpc.Enabled {
+		return nil, errorx.NewCodeUnavailableError(i18n.ServiceUnavailable)
+	}
+	result, err := l.svcCtx.McmsRpc.SendEmail(l.ctx, &mcms.EmailInfo{
+		Target:   []string{req.Target},
+		Subject:  req.Subject,
+		Content:  req.Content,
+		Provider: req.Provider,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.BaseMsgResp{Msg: l.svcCtx.Trans.Trans(l.ctx, result.Msg)}, nil
 }

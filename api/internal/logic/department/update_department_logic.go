@@ -2,6 +2,7 @@ package department
 
 import (
 	"context"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +24,21 @@ func NewUpdateDepartmentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *UpdateDepartmentLogic) UpdateDepartment(req *types.DepartmentInfo) (resp *types.BaseMsgResp, err error) {
-	// todo: add your logic here and delete this line
-
-	return
+	data, err := l.svcCtx.CoreRpc.UpdateDepartment(l.ctx,
+		&core.DepartmentInfo{
+			Id:        req.Id,
+			Status:    req.Status,
+			Sort:      req.Sort,
+			Name:      req.Name,
+			Ancestors: req.Ancestors,
+			Leader:    req.Leader,
+			Phone:     req.Phone,
+			Email:     req.Email,
+			Remark:    req.Remark,
+			ParentId:  req.ParentId,
+		})
+	if err != nil {
+		return nil, err
+	}
+	return &types.BaseMsgResp{Msg: l.svcCtx.Trans.Trans(l.ctx, data.Msg)}, nil
 }

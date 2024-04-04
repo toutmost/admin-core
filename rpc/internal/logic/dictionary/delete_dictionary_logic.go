@@ -2,6 +2,12 @@ package dictionary
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/ent"
+	"github.com/toutmost/admin-core/rpc/ent/dictionary"
+	"github.com/toutmost/admin-core/rpc/ent/dictionarydetail"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
+	"github.com/toutmost/admin-core/rpc/internal/utils/entx"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +30,22 @@ func NewDeleteDictionaryLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *DeleteDictionaryLogic) DeleteDictionary(in *core.IDsReq) (*core.BaseResp, error) {
-	// todo: add your logic here and delete this line
+	err := entx.WithTx(l.ctx, l.svcCtx.DB, func(tx *ent.Tx) error {
+		_, txErr := tx.DictionaryDetail.Delete().Where(dictionarydetail.HasDictionariesWith(dictionary.IDIn(in.Ids...))).Exec(l.ctx)
+		if txErr != nil {
+			return txErr
+		}
 
-	return &core.BaseResp{}, nil
+		_, txErr = tx.Dictionary.Delete().Where(dictionary.IDIn(in.Ids...)).Exec(l.ctx)
+		if txErr != nil {
+			return txErr
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
+
+	return &core.BaseResp{Msg: i18n.DeleteSuccess}, nil
 }

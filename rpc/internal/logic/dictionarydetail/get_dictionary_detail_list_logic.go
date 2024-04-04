@@ -2,6 +2,11 @@ package dictionarydetail
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/ent"
+	"github.com/toutmost/admin-core/rpc/ent/dictionarydetail"
+	"github.com/toutmost/admin-core/rpc/ent/predicate"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +29,36 @@ func NewGetDictionaryDetailListLogic(ctx context.Context, svcCtx *svc.ServiceCon
 }
 
 func (l *GetDictionaryDetailListLogic) GetDictionaryDetailList(in *core.DictionaryDetailListReq) (*core.DictionaryDetailListResp, error) {
-	// todo: add your logic here and delete this line
+	var predicates []predicate.DictionaryDetail
+	if in.DictionaryId != nil {
+		predicates = append(predicates, dictionarydetail.DictionaryIDEQ(*in.DictionaryId))
+	}
+	if in.Key != nil {
+		predicates = append(predicates, dictionarydetail.KeyContains(*in.Key))
+	}
+	result, err := l.svcCtx.DB.DictionaryDetail.Query().Where(predicates...).Page(l.ctx, in.Page, in.PageSize, func(pager *ent.DictionaryDetailPager) {
+		pager.Order = ent.Asc(dictionarydetail.FieldSort)
+	})
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.DictionaryDetailListResp{}, nil
+	resp := &core.DictionaryDetailListResp{}
+	resp.Total = result.PageDetails.Total
+
+	for _, v := range result.List {
+		resp.Data = append(resp.Data, &core.DictionaryDetailInfo{
+			Id:           &v.ID,
+			CreatedAt:    pointy.GetPointer(v.CreatedAt.UnixMilli()),
+			UpdatedAt:    pointy.GetPointer(v.UpdatedAt.UnixMilli()),
+			Status:       pointy.GetPointer(uint32(v.Status)),
+			Title:        &v.Title,
+			Key:          &v.Key,
+			Value:        &v.Value,
+			DictionaryId: &v.DictionaryID,
+			Sort:         &v.Sort,
+		})
+	}
+
+	return resp, nil
 }

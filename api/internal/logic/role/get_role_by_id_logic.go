@@ -2,6 +2,8 @@ package role
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,28 @@ func NewGetRoleByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetRo
 }
 
 func (l *GetRoleByIdLogic) GetRoleById(req *types.IDReq) (resp *types.RoleInfoResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetRoleById(l.ctx, &core.IDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.RoleInfoResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.RoleInfo{
+			BaseIDInfo: types.BaseIDInfo{
+				Id:        data.Id,
+				CreatedAt: data.CreatedAt,
+				UpdatedAt: data.UpdatedAt,
+			},
+			Status:        data.Status,
+			Name:          data.Name,
+			Code:          data.Code,
+			DefaultRouter: data.DefaultRouter,
+			Remark:        data.Remark,
+			Sort:          data.Sort,
+		},
+	}, nil
 }

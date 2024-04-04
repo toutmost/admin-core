@@ -2,6 +2,9 @@ package emaillog
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-message-center/types/mcms"
+	"github.com/zeromicro/go-zero/core/errorx"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +26,39 @@ func NewGetEmailLogListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 }
 
 func (l *GetEmailLogListLogic) GetEmailLogList(req *types.EmailLogListReq) (resp *types.EmailLogListResp, err error) {
-	// todo: add your logic here and delete this line
+	if !l.svcCtx.Config.McmsRpc.Enabled {
+		return nil, errorx.NewCodeUnavailableError(i18n.ServiceUnavailable)
+	}
+	data, err := l.svcCtx.McmsRpc.GetEmailLogList(l.ctx,
+		&mcms.EmailLogListReq{
+			Page:       req.Page,
+			PageSize:   req.PageSize,
+			Target:     req.Target,
+			Subject:    req.Subject,
+			Provider:   req.Provider,
+			SendStatus: req.SendStatus,
+		})
+	if err != nil {
+		return nil, err
+	}
+	resp = &types.EmailLogListResp{}
+	resp.Msg = l.svcCtx.Trans.Trans(l.ctx, i18n.Success)
+	resp.Data.Total = data.GetTotal()
 
-	return
+	for _, v := range data.Data {
+		resp.Data.Data = append(resp.Data.Data,
+			types.EmailLogInfo{
+				BaseUUIDInfo: types.BaseUUIDInfo{
+					Id:        v.Id,
+					CreatedAt: v.CreatedAt,
+					UpdatedAt: v.UpdatedAt,
+				},
+				Target:     v.Target,
+				Subject:    v.Subject,
+				Content:    v.Content,
+				SendStatus: v.SendStatus,
+				Provider:   v.Provider,
+			})
+	}
+	return resp, nil
 }

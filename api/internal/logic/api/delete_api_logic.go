@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +24,12 @@ func NewDeleteApiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteA
 }
 
 func (l *DeleteApiLogic) DeleteApi(req *types.IDsReq) (resp *types.BaseMsgResp, err error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.CoreRpc.DeleteApi(l.ctx, &core.IDsReq{
+		Ids: req.Ids,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.BaseMsgResp{Msg: l.svcCtx.Trans.Trans(l.ctx, result.Msg)}, nil
 }

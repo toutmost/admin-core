@@ -2,6 +2,8 @@ package position
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +26,19 @@ func NewGetPositionByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 }
 
 func (l *GetPositionByIdLogic) GetPositionById(in *core.IDReq) (*core.PositionInfo, error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.DB.Position.Get(l.ctx, in.Id)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.PositionInfo{}, nil
+	return &core.PositionInfo{
+		Id:        &result.ID,
+		CreatedAt: pointy.GetPointer(result.CreatedAt.UnixMilli()),
+		UpdatedAt: pointy.GetPointer(result.UpdatedAt.UnixMilli()),
+		Status:    pointy.GetPointer(uint32(result.Status)),
+		Sort:      &result.Sort,
+		Name:      &result.Name,
+		Code:      &result.Code,
+		Remark:    &result.Remark,
+	}, nil
 }

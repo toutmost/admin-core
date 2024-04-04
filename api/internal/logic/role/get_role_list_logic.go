@@ -2,6 +2,8 @@ package role
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,35 @@ func NewGetRoleListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetRo
 }
 
 func (l *GetRoleListLogic) GetRoleList(req *types.RoleListReq) (resp *types.RoleListResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetRoleList(l.ctx,
+		&core.RoleListReq{
+			Page:     req.Page,
+			PageSize: req.PageSize,
+			Name:     req.Name,
+		})
+	if err != nil {
+		return nil, err
+	}
+	resp = &types.RoleListResp{}
+	resp.Msg = l.svcCtx.Trans.Trans(l.ctx, i18n.Success)
+	resp.Data.Total = data.GetTotal()
 
-	return
+	for _, v := range data.Data {
+		resp.Data.Data = append(resp.Data.Data,
+			types.RoleInfo{
+				BaseIDInfo: types.BaseIDInfo{
+					Id:        v.Id,
+					CreatedAt: v.CreatedAt,
+					UpdatedAt: v.UpdatedAt,
+				},
+				Trans:         l.svcCtx.Trans.Trans(l.ctx, *v.Name),
+				Status:        v.Status,
+				Name:          v.Name,
+				Code:          v.Code,
+				DefaultRouter: v.DefaultRouter,
+				Remark:        v.Remark,
+				Sort:          v.Sort,
+			})
+	}
+	return resp, nil
 }

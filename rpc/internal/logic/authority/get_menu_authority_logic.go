@@ -2,6 +2,8 @@ package authority
 
 import (
 	"context"
+	"github.com/toutmost/admin-core/rpc/ent/role"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +26,10 @@ func NewGetMenuAuthorityLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *GetMenuAuthorityLogic) GetMenuAuthority(in *core.IDReq) (*core.RoleMenuAuthorityResp, error) {
-	// todo: add your logic here and delete this line
+	menus, err := l.svcCtx.DB.Role.Query().Where(role.ID(in.Id)).QueryMenus().IDs(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.RoleMenuAuthorityResp{}, nil
+	return &core.RoleMenuAuthorityResp{MenuId: menus}, nil
 }

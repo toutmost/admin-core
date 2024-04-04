@@ -2,6 +2,8 @@ package dictionary
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,26 @@ func NewGetDictionaryByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *GetDictionaryByIdLogic) GetDictionaryById(req *types.IDReq) (resp *types.DictionaryInfoResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetDictionaryById(l.ctx, &core.IDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.DictionaryInfoResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.DictionaryInfo{
+			BaseIDInfo: types.BaseIDInfo{
+				Id:        data.Id,
+				CreatedAt: data.CreatedAt,
+				UpdatedAt: data.UpdatedAt,
+			},
+			Title:  data.Title,
+			Name:   data.Name,
+			Status: data.Status,
+			Desc:   data.Desc,
+		},
+	}, nil
 }

@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,41 @@ func NewGetUserListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetUs
 }
 
 func (l *GetUserListLogic) GetUserList(req *types.UserListReq) (resp *types.UserListResp, err error) {
-	// todo: add your logic here and delete this line
-
-	return
+	data, err := l.svcCtx.CoreRpc.GetUserList(l.ctx, &core.UserListReq{
+		Page:         req.Page,
+		PageSize:     req.PageSize,
+		Username:     req.Username,
+		Nickname:     req.Nickname,
+		Email:        req.Email,
+		Mobile:       req.Mobile,
+		RoleIds:      req.RoleIds,
+		DepartmentId: req.DepartmentId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	resp = &types.UserListResp{}
+	for _, v := range data.Data {
+		resp.Data.Data = append(resp.Data.Data, types.UserInfo{
+			BaseUUIDInfo: types.BaseUUIDInfo{
+				Id:        v.Id,
+				CreatedAt: v.CreatedAt,
+				UpdatedAt: v.UpdatedAt,
+			},
+			Username:     v.Username,
+			Nickname:     v.Nickname,
+			Mobile:       v.Mobile,
+			RoleIds:      v.RoleIds,
+			Email:        v.Email,
+			Avatar:       v.Avatar,
+			Status:       v.Status,
+			Description:  v.Description,
+			HomePath:     v.HomePath,
+			DepartmentId: v.DepartmentId,
+			PositionIds:  v.PositionIds,
+		})
+	}
+	resp.Data.Total = data.Total
+	resp.Msg = l.svcCtx.Trans.Trans(l.ctx, i18n.Success)
+	return resp, nil
 }

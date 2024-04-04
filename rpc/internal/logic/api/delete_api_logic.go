@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/ent/api"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +27,10 @@ func NewDeleteApiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteA
 }
 
 func (l *DeleteApiLogic) DeleteApi(in *core.IDsReq) (*core.BaseResp, error) {
-	// todo: add your logic here and delete this line
+	_, err := l.svcCtx.DB.API.Delete().Where(api.IDIn(in.Ids...)).Exec(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.BaseResp{}, nil
+	return &core.BaseResp{Msg: i18n.DeleteSuccess}, nil
 }

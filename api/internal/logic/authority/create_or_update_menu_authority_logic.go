@@ -2,6 +2,7 @@ package authority
 
 import (
 	"context"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +24,14 @@ func NewCreateOrUpdateMenuAuthorityLogic(ctx context.Context, svcCtx *svc.Servic
 }
 
 func (l *CreateOrUpdateMenuAuthorityLogic) CreateOrUpdateMenuAuthority(req *types.MenuAuthorityInfoReq) (resp *types.BaseMsgResp, err error) {
-	// todo: add your logic here and delete this line
+	authority, err := l.svcCtx.CoreRpc.CreateOrUpdateMenuAuthority(l.ctx, &core.RoleMenuAuthorityReq{
+		RoleId: req.RoleId,
+		MenuId: req.MenuIds,
+	})
 
-	return
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.BaseMsgResp{Msg: l.svcCtx.Trans.Trans(l.ctx, authority.Msg)}, nil
 }

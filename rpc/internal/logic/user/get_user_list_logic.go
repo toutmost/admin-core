@@ -2,6 +2,12 @@ package user
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/ent/position"
+	"github.com/toutmost/admin-core/rpc/ent/predicate"
+	"github.com/toutmost/admin-core/rpc/ent/role"
+	"github.com/toutmost/admin-core/rpc/ent/user"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +30,63 @@ func NewGetUserListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetUs
 }
 
 func (l *GetUserListLogic) GetUserList(in *core.UserListReq) (*core.UserListResp, error) {
-	// todo: add your logic here and delete this line
+	var predicates []predicate.User
 
-	return &core.UserListResp{}, nil
+	if in.Mobile != nil {
+		predicates = append(predicates, user.MobileEQ(*in.Mobile))
+	}
+
+	if in.Username != nil {
+		predicates = append(predicates, user.UsernameContains(*in.Username))
+	}
+
+	if in.Email != nil {
+		predicates = append(predicates, user.EmailEQ(*in.Email))
+	}
+
+	if in.Nickname != nil {
+		predicates = append(predicates, user.NicknameContains(*in.Nickname))
+	}
+
+	if in.RoleIds != nil {
+		predicates = append(predicates, user.HasRolesWith(role.IDIn(in.RoleIds...)))
+	}
+
+	if in.DepartmentId != nil {
+		predicates = append(predicates, user.DepartmentIDEQ(*in.DepartmentId))
+	}
+
+	if in.PositionIds != nil {
+		predicates = append(predicates, user.HasPositionsWith(position.IDIn(in.PositionIds...)))
+	}
+
+	users, err := l.svcCtx.DB.User.Query().Where(predicates...).WithRoles().WithPositions().Page(l.ctx, in.Page, in.PageSize)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
+
+	resp := &core.UserListResp{}
+	resp.Total = users.PageDetails.Total
+
+	for _, v := range users.List {
+		resp.Data = append(resp.Data, &core.UserInfo{
+			Id:           pointy.GetPointer(v.ID.String()),
+			Avatar:       &v.Avatar,
+			RoleIds:      GetRoleIds(v.Edges.Roles),
+			RoleCodes:    GetRoleCodes(v.Edges.Roles),
+			Mobile:       &v.Mobile,
+			Email:        &v.Email,
+			Status:       pointy.GetPointer(uint32(v.Status)),
+			Username:     &v.Username,
+			Nickname:     &v.Nickname,
+			HomePath:     &v.HomePath,
+			Description:  &v.Description,
+			DepartmentId: &v.DepartmentID,
+			PositionIds:  GetPositionIds(v.Edges.Positions),
+			CreatedAt:    pointy.GetPointer(v.CreatedAt.UnixMilli()),
+			UpdatedAt:    pointy.GetPointer(v.UpdatedAt.UnixMilli()),
+		})
+	}
+
+	return resp, nil
 }

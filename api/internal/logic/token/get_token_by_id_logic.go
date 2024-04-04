@@ -2,6 +2,8 @@ package token
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,28 @@ func NewGetTokenByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetT
 }
 
 func (l *GetTokenByIdLogic) GetTokenById(req *types.UUIDReq) (resp *types.TokenInfoResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetTokenById(l.ctx, &core.UUIDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.TokenInfoResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.TokenInfo{
+			BaseUUIDInfo: types.BaseUUIDInfo{
+				Id:        data.Id,
+				CreatedAt: data.CreatedAt,
+				UpdatedAt: data.UpdatedAt,
+			},
+			Status:    data.Status,
+			Uuid:      data.Uuid,
+			Token:     data.Token,
+			Source:    data.Source,
+			Username:  data.Username,
+			ExpiredAt: data.ExpiredAt,
+		},
+	}, nil
 }

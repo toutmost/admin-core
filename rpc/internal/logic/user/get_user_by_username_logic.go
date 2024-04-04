@@ -2,6 +2,9 @@ package user
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/ent/user"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +27,26 @@ func NewGetUserByUsernameLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *GetUserByUsernameLogic) GetUserByUsername(in *core.UsernameReq) (*core.UserInfo, error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.DB.User.Query().Where(user.UsernameEQ(in.Username)).WithRoles().First(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.UserInfo{}, nil
+	return &core.UserInfo{
+		Nickname:     &result.Nickname,
+		Avatar:       &result.Avatar,
+		Password:     &result.Password,
+		RoleIds:      GetRoleIds(result.Edges.Roles),
+		RoleCodes:    GetRoleCodes(result.Edges.Roles),
+		Mobile:       &result.Mobile,
+		Email:        &result.Email,
+		Status:       pointy.GetPointer(uint32(result.Status)),
+		Id:           pointy.GetPointer(result.ID.String()),
+		Username:     &result.Username,
+		HomePath:     &result.HomePath,
+		Description:  &result.Description,
+		DepartmentId: &result.DepartmentID,
+		CreatedAt:    pointy.GetPointer(result.CreatedAt.UnixMilli()),
+		UpdatedAt:    pointy.GetPointer(result.UpdatedAt.UnixMilli()),
+	}, nil
 }

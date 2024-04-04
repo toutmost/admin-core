@@ -2,6 +2,8 @@ package dictionarydetail
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,36 @@ func NewGetDictionaryDetailListLogic(ctx context.Context, svcCtx *svc.ServiceCon
 }
 
 func (l *GetDictionaryDetailListLogic) GetDictionaryDetailList(req *types.DictionaryDetailListReq) (resp *types.DictionaryDetailListResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetDictionaryDetailList(l.ctx,
+		&core.DictionaryDetailListReq{
+			Page:         req.Page,
+			PageSize:     req.PageSize,
+			DictionaryId: req.DictionaryId,
+			Key:          req.Key,
+		})
+	if err != nil {
+		return nil, err
+	}
+	resp = &types.DictionaryDetailListResp{}
+	resp.Msg = l.svcCtx.Trans.Trans(l.ctx, i18n.Success)
+	resp.Data.Total = data.GetTotal()
 
-	return
+	for _, v := range data.Data {
+		resp.Data.Data = append(resp.Data.Data,
+			types.DictionaryDetailInfo{
+				BaseIDInfo: types.BaseIDInfo{
+					Id:        v.Id,
+					CreatedAt: v.CreatedAt,
+					UpdatedAt: v.UpdatedAt,
+				},
+				Status:       v.Status,
+				Title:        v.Title,
+				Key:          v.Key,
+				Value:        v.Value,
+				DictionaryId: v.DictionaryId,
+				Sort:         v.Sort,
+			})
+	}
+
+	return resp, nil
 }

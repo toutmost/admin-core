@@ -2,6 +2,9 @@ package emaillog
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-message-center/types/mcms"
+	"github.com/zeromicro/go-zero/core/errorx"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +26,30 @@ func NewGetEmailLogByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 }
 
 func (l *GetEmailLogByIdLogic) GetEmailLogById(req *types.UUIDReq) (resp *types.EmailLogInfoResp, err error) {
-	// todo: add your logic here and delete this line
+	if !l.svcCtx.Config.McmsRpc.Enabled {
+		return nil, errorx.NewCodeUnavailableError(i18n.ServiceUnavailable)
+	}
+	data, err := l.svcCtx.McmsRpc.GetEmailLogById(l.ctx, &mcms.UUIDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.EmailLogInfoResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.EmailLogInfo{
+			BaseUUIDInfo: types.BaseUUIDInfo{
+				Id:        data.Id,
+				CreatedAt: data.CreatedAt,
+				UpdatedAt: data.UpdatedAt,
+			},
+			Target:     data.Target,
+			Subject:    data.Subject,
+			Content:    data.Content,
+			SendStatus: data.SendStatus,
+			Provider:   data.Provider,
+		},
+	}, nil
 }

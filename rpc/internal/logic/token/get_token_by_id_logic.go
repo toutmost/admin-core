@@ -2,6 +2,9 @@ package token
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-common/utils/uuidx"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +27,20 @@ func NewGetTokenByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetT
 }
 
 func (l *GetTokenByIdLogic) GetTokenById(in *core.UUIDReq) (*core.TokenInfo, error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.DB.Token.Get(l.ctx, uuidx.ParseUUIDString(in.Id))
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.TokenInfo{}, nil
+	return &core.TokenInfo{
+		Id:        pointy.GetPointer(result.ID.String()),
+		CreatedAt: pointy.GetPointer(result.CreatedAt.UnixMilli()),
+		UpdatedAt: pointy.GetPointer(result.UpdatedAt.UnixMilli()),
+		Status:    pointy.GetPointer(uint32(result.Status)),
+		Uuid:      pointy.GetPointer(result.UUID.String()),
+		Token:     &result.Token,
+		Source:    &result.Source,
+		Username:  &result.Username,
+		ExpiredAt: pointy.GetPointer(result.ExpiredAt.UnixMilli()),
+	}, nil
 }

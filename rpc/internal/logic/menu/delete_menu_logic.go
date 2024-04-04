@@ -2,6 +2,10 @@ package menu
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/ent/menu"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
+	"github.com/zeromicro/go-zero/core/errorx"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +28,22 @@ func NewDeleteMenuLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Delete
 }
 
 func (l *DeleteMenuLogic) DeleteMenu(in *core.IDReq) (*core.BaseResp, error) {
-	// todo: add your logic here and delete this line
+	exist, err := l.svcCtx.DB.Menu.Query().Where(menu.ParentID(in.Id)).Exist(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.BaseResp{}, nil
+	if exist {
+		logx.Errorw("delete menu failed, please check its children had been deleted",
+			logx.Field("menuId", in.Id))
+		return nil, errorx.NewInvalidArgumentError("menu.deleteChildrenDesc")
+	}
+
+	err = l.svcCtx.DB.Menu.DeleteOneID(in.Id).Exec(l.ctx)
+
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
+
+	return &core.BaseResp{Msg: i18n.DeleteSuccess}, nil
 }

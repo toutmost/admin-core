@@ -2,7 +2,6 @@ package captcha
 
 import (
 	"context"
-	"fmt"
 	"github.com/toutmost/admin-common/enum/errorcode"
 	"github.com/toutmost/admin-common/i18n"
 
@@ -33,7 +32,6 @@ func (l *GetCaptchaLogic) GetCaptcha() (resp *types.CaptchaResp, err error) {
 			Data:         types.CaptchaInfo{},
 		}, nil
 	} else {
-		fmt.Println("=================================>", id, b64s)
 		resp = &types.CaptchaResp{
 			BaseDataInfo: types.BaseDataInfo{Msg: l.svcCtx.Trans.Trans(l.ctx, i18n.Success)},
 			Data: types.CaptchaInfo{

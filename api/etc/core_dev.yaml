@@ -85,7 +85,7 @@ JobRpc:
 
 McmsRpc:
   Target: 127.0.0.1:9106
-  Enabled: false
+  Enabled: true
   Timeout: 5000
 
 # Tracing Analysis

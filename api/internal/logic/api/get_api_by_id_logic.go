@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,25 @@ func NewGetApiByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetApi
 }
 
 func (l *GetApiByIdLogic) GetApiById(req *types.IDReq) (resp *types.ApiInfoResp, err error) {
-	// todo: add your logic here and delete this line
+	data, err := l.svcCtx.CoreRpc.GetApiById(l.ctx, &core.IDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return &types.ApiInfoResp{
+		BaseDataInfo: types.BaseDataInfo{
+			Code: 0,
+			Msg:  l.svcCtx.Trans.Trans(l.ctx, i18n.Success),
+		},
+		Data: types.ApiInfo{
+			BaseIDInfo:  types.BaseIDInfo{Id: data.Id, CreatedAt: data.CreatedAt, UpdatedAt: data.UpdatedAt},
+			Trans:       l.svcCtx.Trans.Trans(l.ctx, *data.Description),
+			Path:        data.Path,
+			Description: data.Description,
+			Group:       data.ApiGroup,
+			Method:      data.Method,
+			IsRequired:  data.IsRequired,
+			ServiceName: data.ServiceName,
+		},
+	}, nil
 }

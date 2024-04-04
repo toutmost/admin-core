@@ -2,6 +2,8 @@ package authority
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/types/core"
 
 	"github.com/toutmost/admin-core/api/internal/svc"
 	"github.com/toutmost/admin-core/api/internal/types"
@@ -23,7 +25,21 @@ func NewGetApiAuthorityLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 }
 
 func (l *GetApiAuthorityLogic) GetApiAuthority(req *types.IDReq) (resp *types.ApiAuthorityListResp, err error) {
-	// todo: add your logic here and delete this line
+	roleData, err := l.svcCtx.CoreRpc.GetRoleById(l.ctx, &core.IDReq{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	data := l.svcCtx.Casbin.GetFilteredPolicy(0, *roleData.Code)
+	resp = &types.ApiAuthorityListResp{}
+	resp.Msg = l.svcCtx.Trans.Trans(l.ctx, i18n.Success)
+	resp.Data.Total = uint64(len(data))
+	for _, v := range data {
+		resp.Data.Data = append(resp.Data.Data, types.ApiAuthorityInfo{
+			Path:   v[1],
+			Method: v[2],
+		})
+	}
+
+	return resp, nil
 }

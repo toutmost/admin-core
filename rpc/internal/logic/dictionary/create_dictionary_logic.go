@@ -2,6 +2,9 @@ package dictionary
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -25,7 +28,15 @@ func NewCreateDictionaryLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 // Dictionary management
 func (l *CreateDictionaryLogic) CreateDictionary(in *core.DictionaryInfo) (*core.BaseIDResp, error) {
-	// todo: add your logic here and delete this line
+	result, err := l.svcCtx.DB.Dictionary.Create().
+		SetNotNilStatus(pointy.GetStatusPointer(in.Status)).
+		SetNotNilTitle(in.Title).
+		SetNotNilName(in.Name).
+		SetNotNilDesc(in.Desc).
+		Save(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.BaseIDResp{}, nil
+	return &core.BaseIDResp{Id: result.ID, Msg: i18n.CreateSuccess}, nil
 }

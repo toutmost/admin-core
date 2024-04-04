@@ -2,6 +2,11 @@ package role
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/ent"
+	"github.com/toutmost/admin-core/rpc/ent/predicate"
+	"github.com/toutmost/admin-core/rpc/ent/role"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +29,39 @@ func NewGetRoleListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetRo
 }
 
 func (l *GetRoleListLogic) GetRoleList(in *core.RoleListReq) (*core.RoleListResp, error) {
-	// todo: add your logic here and delete this line
+	var predicates []predicate.Role
+	if in.Name != nil {
+		predicates = append(predicates, role.NameContains(*in.Name))
+	}
+	if in.Code != nil {
+		predicates = append(predicates, role.CodeEQ(*in.Code))
+	}
+	if in.DefaultRouter != nil {
+		predicates = append(predicates, role.DefaultRouterContains(*in.DefaultRouter))
+	}
+	result, err := l.svcCtx.DB.Role.Query().Where(predicates...).Page(l.ctx, in.Page, in.PageSize, func(pager *ent.RolePager) {
+		pager.Order = ent.Asc(role.FieldSort)
+	})
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.RoleListResp{}, nil
+	resp := &core.RoleListResp{}
+	resp.Total = result.PageDetails.Total
+
+	for _, v := range result.List {
+		resp.Data = append(resp.Data, &core.RoleInfo{
+			Id:            &v.ID,
+			CreatedAt:     pointy.GetPointer(v.CreatedAt.UnixMilli()),
+			UpdatedAt:     pointy.GetPointer(v.UpdatedAt.UnixMilli()),
+			Status:        pointy.GetPointer(uint32(v.Status)),
+			Name:          &v.Name,
+			Code:          &v.Code,
+			DefaultRouter: &v.DefaultRouter,
+			Remark:        &v.Remark,
+			Sort:          &v.Sort,
+		})
+	}
+
+	return resp, nil
 }

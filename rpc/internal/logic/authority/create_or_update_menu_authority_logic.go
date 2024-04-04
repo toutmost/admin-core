@@ -2,6 +2,10 @@ package authority
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-core/rpc/ent"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
+	"github.com/toutmost/admin-core/rpc/internal/utils/entx"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +28,23 @@ func NewCreateOrUpdateMenuAuthorityLogic(ctx context.Context, svcCtx *svc.Servic
 }
 
 func (l *CreateOrUpdateMenuAuthorityLogic) CreateOrUpdateMenuAuthority(in *core.RoleMenuAuthorityReq) (*core.BaseResp, error) {
-	// todo: add your logic here and delete this line
+	err := entx.WithTx(l.ctx, l.svcCtx.DB, func(tx *ent.Tx) error {
+		err := tx.Role.UpdateOneID(in.RoleId).ClearMenus().Exec(l.ctx)
+		if err != nil {
+			return err
+		}
 
-	return &core.BaseResp{}, nil
+		err = tx.Role.UpdateOneID(in.RoleId).AddMenuIDs(in.MenuId...).Exec(l.ctx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
+
+	return &core.BaseResp{Msg: i18n.UpdateSuccess}, nil
 }

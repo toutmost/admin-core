@@ -2,6 +2,9 @@ package position
 
 import (
 	"context"
+	"github.com/toutmost/admin-common/i18n"
+	"github.com/toutmost/admin-common/utils/pointy"
+	"github.com/toutmost/admin-core/rpc/internal/utils/dberrorhandler"
 
 	"github.com/toutmost/admin-core/rpc/internal/svc"
 	"github.com/toutmost/admin-core/rpc/types/core"
@@ -24,7 +27,16 @@ func NewUpdatePositionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Up
 }
 
 func (l *UpdatePositionLogic) UpdatePosition(in *core.PositionInfo) (*core.BaseResp, error) {
-	// todo: add your logic here and delete this line
+	err := l.svcCtx.DB.Position.UpdateOneID(*in.Id).
+		SetNotNilStatus(pointy.GetStatusPointer(in.Status)).
+		SetNotNilSort(in.Sort).
+		SetNotNilName(in.Name).
+		SetNotNilCode(in.Code).
+		SetNotNilRemark(in.Remark).
+		Exec(l.ctx)
+	if err != nil {
+		return nil, dberrorhandler.DefaultEntError(l.Logger, err, in)
+	}
 
-	return &core.BaseResp{}, nil
+	return &core.BaseResp{Msg: i18n.UpdateSuccess}, nil
 }
